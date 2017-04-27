@@ -45,6 +45,9 @@ class Crawler():
 		pw.send_keys(password)
 		self.browser.find_element_by_name("p1").submit()
 		courses = self.browser.find_elements_by_xpath('//body/div/div/table/tbody/tr')
+		if not courses:
+			self.halt_browser()
+			raise UserNamePassWordError
 		self.links = []
 		for course in courses[1:-2]:
 			self.links.append(course.find_element_by_tag_name('a').get_attribute('href'))
@@ -83,6 +86,12 @@ class Crawler():
 	def halt_browser(self):
 		self.browser.quit()
 
+class Error(Exception):
+	pass
+class UserNamePassWordError(Error):
+	"""docstring for UserNamePassWordError"""
+		
+		
 
 if __name__ == '__main__':
 	c = Crawler('b05507010', '######')

@@ -7,10 +7,16 @@ import getpass
 from bs4 import BeautifulSoup as bs
 user_name = input('請輸入ceiba帳號')
 password = getpass.getpass('請輸入ceiba密碼')
-c = crawling.Crawler(user_name, password)
+try:
+	c = crawling.Crawler(user_name, password)
+except crawling.UserNamePassWordError:
+	print('Wrong username or password')
+	user_name = input('請輸入ceiba帳號')
+	password = getpass.getpass('請輸入ceiba密碼')
+	c = crawling.Crawler(user_name, password)
 for course in c.courses:
 	c.get_homework(course)
-c.halt_browser()
+#c.halt_browser()
 one = timer()
 cal_id = calender.make_calender()
 for course in c.courses:
