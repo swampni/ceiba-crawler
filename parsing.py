@@ -37,8 +37,10 @@ def parse(soup, title):
 		link = link_tag.get('href')
 	else:
 		link = 'no file'
-
-	time = deadline.replace(' ', 'T')+":00:00"
+	if deadline[-2:] == '24':
+		time = deadline[:-1].replace(' ', 'T')+"3:59:59"
+	else:
+		time = deadline.replace(' ', 'T')+":00:00"
 	description = '相關網址:'+'\n'+link
 	payload = { 
 			'summary':title+name,
