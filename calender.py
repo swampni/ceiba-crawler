@@ -42,7 +42,8 @@ def get_credentials():
     credential_dir = os.path.join(home_dir, '.credentials')
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
-    credential_path = os.path.join(credential_dir, 'calendar-python-quickstart.json')
+    credential_path = os.path.join(
+        credential_dir, 'calendar-python-quickstart.json')
 
     store = Storage(credential_path)
     credentials = store.get()
@@ -51,10 +52,11 @@ def get_credentials():
         flow.user_agent = APPLICATION_NAME
         if flags:
             credentials = tools.run_flow(flow, store, flags)
-        else: # Needed only for compatibility with Python 2.6
+        else:  # Needed only for compatibility with Python 2.6
             credentials = tools.run(flow, store)
         print('Storing credentials to ' + credential_path)
     return credentials
+
 
 def main(EVENTs, calendar_id):
     """Shows basic usage of the Google Calendar API.
@@ -67,12 +69,13 @@ def main(EVENTs, calendar_id):
     service = discovery.build('calendar', 'v3', http=http)
     for EVENT in EVENTs:
         e = service.events().insert(calendarId=calendar_id,
-            sendNotifications=True, body=EVENT).execute()
+                                    sendNotifications=True, body=EVENT).execute()
         print('''*** %r event added:
         Start: %s
         fileurl: %s
     ''' % (e['summary'].encode('utf-8'),
-        e['start']['dateTime'], e['description']))
+           e['start']['dateTime'], e['description']))
+
 
 def deleteMe(calendar_id):
     credentials = get_credentials()
@@ -80,14 +83,16 @@ def deleteMe(calendar_id):
     service = discovery.build('calendar', 'v3', http=http)
     page_token = None
     while True:
-        events = service.events().list(calendarId=calendar_id, pageToken=page_token).execute()
+        events = service.events().list(calendarId=calendar_id,
+                                       pageToken=page_token).execute()
         for event in events['items']:
             e = service.events().delete(calendarId=calendar_id,
-            eventId = event['id']).execute()
+                                        eventId=event['id']).execute()
         page_token = events.get('nextPageToken')
         if not page_token:
             break
     print('刪光光了')
+
 
 def make_calender():
     credentials = get_credentials()
@@ -98,18 +103,20 @@ def make_calender():
     while True:
         calendar_list = service.calendarList().list(pageToken=page_token).execute()
         for calendar_list_entry in calendar_list['items']:
-            summary_list.update({calendar_list_entry['summary']:calendar_list_entry['id']})
+            summary_list.update(
+                {calendar_list_entry['summary']: calendar_list_entry['id']})
         page_token = calendar_list.get('nextPageToken')
         if not page_token:
             break
     if 'NTUceiba' not in summary_list.keys():
         calendar = {
-                'summary': 'NTUceiba',
-                'timeZone': 'Asia/Taipei'
-                }
+            'summary': 'NTUceiba',
+            'timeZone': 'Asia/Taipei'
+        }
         created_calendar = service.calendars().insert(body=calendar).execute()
         return created_calendar['id']
-    else: return summary_list['NTUceiba']
+    else:
+        return summary_list['NTUceiba']
 
 
 if __name__ == '__main__':
