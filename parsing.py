@@ -30,57 +30,56 @@ classTime = {
     'D': ['21:10', '22:00']
 }
 
-
 def parse(soup, title):
-    name = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[
-        0].td.string.lstrip().rstrip()
-    deadline = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[
-        7].td.string.lstrip().rstrip()
-    link_tag = soup.body.div.div.find(
-        id='section').div.table.tbody.find_all('tr')[2].td.a
-    if link_tag:
-        link = link_tag.get('href')
-    else:
-        link = 'no file'
-
-    time = deadline.replace(' ', 'T')+":00:00"
-    description = '相關網址:'+'\n'+link
-    payload = {
-        'summary': title+name,
-        'start': {'dateTime': time, 'timeZone': 'Asia/Taipei'},
-        'end': {'dateTime': time, 'timeZone': 'Asia/Taipei'},
-        'description': description,
-        'reminders': {
-            'useDefault': False,
-            'overrides': [
-                {'method': 'popup', 'minutes': 24 * 60},
-                {'method': 'popup', 'minutes': 24 * 60 * 2},
-            ],
-        },
-        'colorId': '1'
-    }
-    return payload
-
+	name = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[0].td.string.lstrip().rstrip()
+	deadline = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[7].td.string.lstrip().rstrip()
+	link_tag = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[2].td.a
+	if link_tag:
+		link = link_tag.get('href')
+	else:
+		link = 'no file'
+	if deadline[-2:] == '24':
+		time = deadline[:-1].replace(' ', 'T')+"3:59:59"
+	else:
+		time = deadline.replace(' ', 'T')+":00:00"
+	description = '相關網址:'+'\n'+link
+	payload = { 
+			'summary':title+name,
+			'start':{'dateTime': time, 'timeZone':'Asia/Taipei'},
+			'end':{'dateTime':time, 'timeZone':'Asia/Taipei'},
+			'description': description,
+			'reminders':{
+    					'useDefault': False,
+    					'overrides':[
+      								{'method': 'popup', 'minutes': 24 * 60},
+      								{'method': 'popup', 'minutes': 24 * 60 * 2},
+    								],
+ 						 },
+			'colorId':'1'
+			}
+	return payload
 
 def parse_time(course_time, title):
-    split_course_time = course_time.split()
-    day = delta(days=1)
-    now = date.isoweekday(date.today())
-    cTime = []
-    payloads = []
-    for i in range(0, len(split_course_time), 2):
-        distance = (week[split_course_time[i]]-now+7) % 7
-        start_day = date.today()+distance*day
-        num = split_course_time[i+1].split(',')
-        start_time = start_day.isoformat()+'T'+classTime[num[0]][0]+":00"
-        end_time = start_day.isoformat()+'T'+classTime[num[-1]][1]+":00"
-        payload = {
-            'summary': title,
-            'start': {'dateTime': start_time, 'timeZone': 'Asia/Taipei'},
-            'end': {'dateTime': end_time, 'timeZone': 'Asia/Taipei'},
-            'recurrence': ['RRULE:FREQ=WEEKLY;UNTIL=20170701T170000Z'],
-            'description': ' ',
-            'colorId': '2'
-        }
-        payloads.append(payload)
-    return payloads
+	split_course_time = course_time.split()
+	day = delta(days =1)
+	now = date.isoweekday(date.today())
+	cTime = []
+	payloads = []
+	for i in range(0,len(split_course_time),2):		
+		distance = (week[split_course_time[i]]-now+7)%7
+		start_day = date.today()+distance*day
+		num = split_course_time[i+1].split(',')
+		start_time = start_day.isoformat()+'T'+classTime[num[0]][0]+":00"
+		end_time = start_day.isoformat()+'T'+classTime[num[-1]][1]+":00"		
+		payload = {
+				'summary':title,
+				'start': {'dateTime': start_time, 'timeZone':'Asia/Taipei'},
+				'end':{'dateTime':end_time, 'timeZone':'Asia/Taipei'},
+				'recurrence': ['RRULE:FREQ=WEEKLY;UNTIL=20170701T170000Z'],
+				'description': ' ',
+				'colorId':'2'
+				}
+		payloads.append(payload)
+	return payloads
+
+
