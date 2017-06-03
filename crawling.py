@@ -29,8 +29,11 @@ class Crawler():
                 '//body/div/div/div/div/table/tbody/tr/td').text
             course_time = self.browser.find_element_by_xpath(
                 '//body/div/div/div/div/table/tbody/tr[6]/td').text
+            course_place = self.browser.find_element_by_xpath(
+                '//body/div/div/div/div/table/tbody/tr[7]/td').text
             _info.append(course_name)
             _info.append(course_time)
+            _info.append(course_place)
             _info.append({'homework': [], 'bulletin': []})
             self.courses.append(_info)
 
