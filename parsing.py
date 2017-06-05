@@ -30,7 +30,7 @@ classTime = {
     'D': ['21:10', '22:00']
 }
 
-def parse(soup, title):
+def parse(soup, reminds, title):
 	name = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[0].td.string.lstrip().rstrip()
 	deadline = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[7].td.string.lstrip().rstrip()
 	link_tag = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[2].td.a
@@ -39,10 +39,32 @@ def parse(soup, title):
 	else:
 		link = 'no file'
 	if deadline[-2:] == '24':
-		time = deadline[:-1].replace(' ', 'T')+"3:59:59"
+		time = deadline[:-1].replace(' ', 'T')+"3:59:59+08:00"
 	else:
-		time = deadline.replace(' ', 'T')+":00:00"
+		time = deadline.replace(' ', 'T')+":00:00+08:00"
 	description = '相關網址:'+'\n'+link
+
+	timecode = {'D': 1440, 'H': 60, 'M' : 1}
+	intremind = []
+	for remind in reminds:
+	    word_count = -1
+	    word_start = 0
+	    x = 0
+	    for word in remind:
+	        word_count += 1
+	        if word in timecode.keys():
+	            try: 
+	                x += timecode[word]*int(remind[word_start:word_count])
+	            except:
+	                break
+	            else:
+	                word_start = word_count + 1
+	        
+	    if x != 0:
+	        intremind.append({'method': 'popup', 'minutes': x })
+
+
+
 	payload = { 
 			'summary':title+name,
 			'start':{'dateTime': time, 'timeZone':'Asia/Taipei'},
@@ -50,16 +72,13 @@ def parse(soup, title):
 			'description': description,
 			'reminders':{
     					'useDefault': False,
-    					'overrides':[
-      								{'method': 'popup', 'minutes': 24 * 60},
-      								{'method': 'popup', 'minutes': 24 * 60 * 2},
-    								],
+    					'overrides':intremind
  						 },
 			'colorId':'1'
 			}
 	return payload
 
-def parse_time(course_time, title):
+def parse_time(course_place, course_time, title):
 	split_course_time = course_time.split()
 	day = delta(days =1)
 	now = date.isoweekday(date.today())
@@ -69,13 +88,14 @@ def parse_time(course_time, title):
 		distance = (week[split_course_time[i]]-now+7)%7
 		start_day = date.today()+distance*day
 		num = split_course_time[i+1].split(',')
-		start_time = start_day.isoformat()+'T'+classTime[num[0]][0]+":00"
-		end_time = start_day.isoformat()+'T'+classTime[num[-1]][1]+":00"		
+		start_time = start_day.isoformat()+'T'+classTime[num[0]][0]+":00+08:00"
+		end_time = start_day.isoformat()+'T'+classTime[num[-1]][1]+":00+08:00"		
 		payload = {
 				'summary':title,
 				'start': {'dateTime': start_time, 'timeZone':'Asia/Taipei'},
 				'end':{'dateTime':end_time, 'timeZone':'Asia/Taipei'},
 				'recurrence': ['RRULE:FREQ=WEEKLY;UNTIL=20170701T170000Z'],
+				'location': course_place,
 				'description': ' ',
 				'colorId':'2'
 				}

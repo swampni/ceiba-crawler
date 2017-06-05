@@ -4,13 +4,13 @@ import httplib2
 import os
 import sys
 
+
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
 import datetime
-
 try:
     import argparse
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
@@ -57,8 +57,8 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
-
-def main(EVENTs, calendar_id):
+u_id=[]
+def main(olduser,EVENTs, calendar_id):
     """Shows basic usage of the Google Calendar API.
 
     Creates a Google Calendar API service object and outputs a list of the next
@@ -67,17 +67,99 @@ def main(EVENTs, calendar_id):
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
-    for EVENT in EVENTs:
-        e = service.events().insert(calendarId=calendar_id,
-                                    sendNotifications=True, body=EVENT).execute()
-        print('''*** %r event added:
-        Start: %s
-        fileurl: %s
-    ''' % (e['summary'].encode('utf-8'),
-           e['start']['dateTime'], e['description']))
+    if bool(olduser) == False:
+        for EVENT in EVENTs:
+            e = service.events().insert(calendarId=calendar_id,
+                                        sendNotifications=True, body=EVENT).execute()
+            print('''*** %r event added:
+            Start: %s
+            fileurl: %s
+        ''' % (e['summary'].encode('utf-8'),
+                e['start']['dateTime'], e['description']))
+            u_id.append(e['id'])
+        return
+    else:
+        new_events=[]
+        #u_id=[]
+        for given_event in EVENTs:
+            page_token = None
+            updated = False
+            
+            #hw
+            while True:
+                known_events = service.events().list(calendarId=calendar_id,
+                                       pageToken=page_token).execute()
+            
+                for known_event in known_events['items']:            
+                    if 'recurrence' not in given_event.keys(): #Then it is homework
+                        if given_event['summary'] == known_event['summary']:
+                            for key in given_event.keys():
+                                
+                                if key == 'reminders': 
+                                    if given_event[key]['overrides'] == [] and olduser == 2:
+                                        try:
+                                            given_event[key]['overrides'] = known_event[key]['overrides']
+                                        except KeyError:
+                                            given_event[key]['overrides'] =[]
 
 
-def deleteMe(calendar_id):
+                                if given_event[key] == '' or given_event[key] == ' ':
+                                    if key not in known_event or known_event[key] == ' ':    #空對空  都是空
+                                        pass
+                                    else :                                                   #空對有  刪除
+                                        print('deleted attribute',key,':', known_event[key])
+                                elif key not in known_event:                                 #有對空  增加
+                                    print('new attribute',key, ':',given_event[key])
+                                elif given_event[key] != known_event[key] :                  #有對有，不一樣  更動
+                                    print(key, 'attribute of ', known_event['summary'],' at ',known_event['start']['dateTime'], ' is changed from ', known_event[key] ,'to',given_event[key])
+                                else:                                                        #有對有，一樣  不變
+                                    pass
+
+                            u = service.events().update(calendarId=calendar_id,
+                                            eventId=known_event['id'],body=given_event).execute()
+                            u_id.append(u['id'])
+                            updated = True
+                            break
+                    else: #it is class
+                        if given_event['summary'] == known_event['summary'] and classtime(given_event) == classtime(known_event):
+                            for key in given_event.keys():
+                                if given_event[key] == '' or given_event[key] == ' ':
+                                    if key not in known_event or known_event[key] == ' ':
+                                        pass
+                                    else:
+                                        print('deleted attribute',key,':', known_event[key])
+                                elif key not in known_event:
+                                    print('new attribute', key,':', given_event[key])
+                                elif given_event[key] != known_event[key] :
+                                    print(key, 'attribute of ', known_event['summary'],' at ',known_event['start']['dateTime'], ' is changed from ', known_event[key] ,'to',given_event[key])
+                                else:
+                                    pass
+
+                            u = service.events().update(calendarId=calendar_id,
+                                            eventId=known_event['id'],body=given_event).execute()
+                            u_id.append(u['id'])
+                            updated = True
+                            break                    
+                    if updated == True:
+                        break
+                if updated == True:
+                    break
+                page_token = known_events.get('nextPageToken')
+                if not page_token:
+                    break
+            if updated == False: #no correspoding events
+                print('new event')
+                main(0, [given_event],calendar_id)
+        
+        return u_id
+            
+            #print('j',EVENT)
+        
+
+
+
+
+def deleteMe(calendar_id,confirmed):
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
@@ -86,15 +168,15 @@ def deleteMe(calendar_id):
         events = service.events().list(calendarId=calendar_id,
                                        pageToken=page_token).execute()
         for event in events['items']:
-            e = service.events().delete(calendarId=calendar_id,
-                                        eventId=event['id']).execute()
+            if event['id'] not in confirmed:
+                print('deleted ', event['summary'],' at ', event['start']['dateTime'])
+                e = service.events().delete(calendarId=calendar_id,
+                                            eventId=event['id']).execute()
         page_token = events.get('nextPageToken')
         if not page_token:
             break
-    print('刪光光了')
 
-
-def make_calender():
+def make_calender(user):
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
@@ -109,16 +191,29 @@ def make_calender():
         if not page_token:
             break
     if 'NTUceiba' not in summary_list.keys():
+        print('新的使用者',user,'，您好')
         calendar = {
             'summary': 'NTUceiba',
             'timeZone': 'Asia/Taipei'
         }
         created_calendar = service.calendars().insert(body=calendar).execute()
-        return created_calendar['id']
+        return [created_calendar['id'],0]
     else:
-        return summary_list['NTUceiba']
+        print('使用者',user,'，您好')
+        return [summary_list['NTUceiba'],1]
+
+def classtime(event):
+    year = int(event['start']['dateTime'][0:4])
+    month = int(event['start']['dateTime'][5:7])
+    day = int(event['start']['dateTime'][8:10])
+    time = event['start']['dateTime'][11:]
+    time_end = event['end']['dateTime'][11:]
+    return [datetime.date(year,month,day).weekday(), time, time_end]
 
 
-if __name__ == '__main__':
-    cal_id = make_calender()
-    deleteMe(cal_id)
+# Print the updated date.
+
+
+#if __name__ == '__main__':
+#    cal_id = make_calender()
+#    deleteMe(cal_id)

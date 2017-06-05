@@ -16,6 +16,7 @@ class Crawler():
             self.driver = driver
         self.browser = webdriver.Chrome(self.driver)
         self.courses = []
+        self.user = []
         self.login(user_name, password)
         for link in self.links:
             _info = []
@@ -29,8 +30,11 @@ class Crawler():
                 '//body/div/div/div/div/table/tbody/tr/td').text
             course_time = self.browser.find_element_by_xpath(
                 '//body/div/div/div/div/table/tbody/tr[6]/td').text
+            course_place = self.browser.find_element_by_xpath(
+                '//body/div/div/div/div/table/tbody/tr[7]/td').text
             _info.append(course_name)
             _info.append(course_time)
+            _info.append(course_place)
             _info.append({'homework': [], 'bulletin': []})
             self.courses.append(_info)
 
@@ -51,13 +55,19 @@ class Crawler():
         self.browser.find_element_by_name("p1").submit()
         courses = self.browser.find_elements_by_xpath(
             '//body/div/div/table/tbody/tr')
+
         if not courses:
             self.halt_browser()
             raise UserNamePassWordError
+
+        self.user = self.browser.find_element_by_xpath(
+            '//*[@id="wel-msg"]/span').text
+
         self.links = []
         for course in courses[1:-2]:
             self.links.append(course.find_element_by_tag_name(
                 'a').get_attribute('href'))
+
 
     def get_homework(self, course):
         self.browser.get("https://ceiba.ntu.edu.tw/modules/index.php?csn=" +
@@ -71,7 +81,7 @@ class Crawler():
                     '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td/a').click()
                 self.browser.switch_to.default_content()
                 self.browser.switch_to.frame('mainFrame')
-                course[3]['homework'].append(self.browser.page_source)
+                course[4]['homework'].append(self.browser.page_source)
                 self.browser.back()
                 self.browser.switch_to.frame('mainFrame')
         except:
