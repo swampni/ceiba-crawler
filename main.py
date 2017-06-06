@@ -38,7 +38,7 @@ else:
 remind = []
 if yn == 'Y' or yn == 'y':
     while True :
-        remind.append(input('請輸入最多久之前提醒(天 = D, 小時 = H, 分鐘 = M),輸入完畢請打end'))
+        remind.append(input('請輸入多久之前提醒(天 = D, 小時 = H, 分鐘 = M)(可設定多次提醒),完全輸入完畢請打end\n'))
         if remind[-1] == 'end':
             del remind[-1]
             break
