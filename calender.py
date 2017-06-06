@@ -209,3 +209,4 @@ def classtime(event):
     time = event['start']['dateTime'][11:]
     time_end = event['end']['dateTime'][11:]
     return [datetime.date(year,month,day).weekday(), time, time_end]
+
