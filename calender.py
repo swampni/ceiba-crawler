@@ -210,10 +210,3 @@ def classtime(event):
     time_end = event['end']['dateTime'][11:]
     return [datetime.date(year,month,day).weekday(), time, time_end]
 
-
-# Print the updated date.
-
-
-#if __name__ == '__main__':
-#    cal_id = make_calender()
-#    deleteMe(cal_id)

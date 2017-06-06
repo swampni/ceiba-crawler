@@ -55,7 +55,7 @@ for course in c.courses:
     calender.main(olduser,parsing.parse_time(course[3], course[2], course[1]), cal_id)
     confirmed =  calender.main(olduser, (parsing.parse(bs(page, 'html.parser'), remind,course[
                   1]) for page in course[4]['homework'] ), cal_id)
-if bool(olduser) == False:
+if bool(olduser) == True:
     calender.deleteMe(cal_id,confirmed)
 
 

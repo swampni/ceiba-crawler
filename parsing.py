@@ -94,12 +94,10 @@ def parse_time(course_place, course_time, title):
 				'summary':title,
 				'start': {'dateTime': start_time, 'timeZone':'Asia/Taipei'},
 				'end':{'dateTime':end_time, 'timeZone':'Asia/Taipei'},
-				'recurrence': ['RRULE:FREQ=WEEKLY;UNTIL=20170701T170000Z'],
+				'recurrence': ['RRULE:FREQ=WEEKLY;UNTIL=20170623T220000Z'],
 				'location': course_place,
 				'description': ' ',
 				'colorId':'2'
 				}
 		payloads.append(payload)
 	return payloads
-
-
