@@ -24,6 +24,7 @@ while flag:
         password = getpass.getpass('請輸入ceiba密碼')
 for course in c.courses:
     c.get_homework(course)
+    c.get_syllabus(course)
 c.halt_browser()
 one = timer()
 
@@ -52,11 +53,11 @@ else:
 
 
 for course in c.courses:
-    calender.main(olduser,parsing.parse_time(course[3], course[2], course[1]), cal_id)
+    calender.main(olduser,parsing.parse_time(course[3], course[2], course[1] , course[4]['syllabus']), cal_id)
     confirmed =  calender.main(olduser, (parsing.parse(bs(page, 'html.parser'), remind,course[
                   1]) for page in course[4]['homework'] ), cal_id)
 if bool(olduser) == True:
-    calender.deleteMe(cal_id,confirmed)
+    calender.deleteMe(cal_id,confirmed) 
 
 
     
