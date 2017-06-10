@@ -102,8 +102,8 @@ class Crawler():
         else:
             for i in range(1, entites):
                 try:
-                    week =  int(self.browser.find_element_by_xpath(
-                    '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td[1]').text[1:-1])
+                    week = int(self.browser.find_element_by_xpath(
+                        '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td[1]').text[1:-1])
                 except:
                     continue
                 description = ''
