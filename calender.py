@@ -58,7 +58,7 @@ def get_credentials():
     return credentials
 
 u_id=[]
-def main(olduser,EVENTs, calendar_id):
+def main(olduser,given_events, calendar_id):
     """Shows basic usage of the Google Calendar API.
 
     Creates a Google Calendar API service object and outputs a list of the next
@@ -68,20 +68,25 @@ def main(olduser,EVENTs, calendar_id):
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
     if bool(olduser) == False:
-        for EVENT in EVENTs:
-            e = service.events().insert(calendarId=calendar_id,
-                                        sendNotifications=True, body=EVENT).execute()
-            print('''*** %r event added:
-            Start: %s
-            fileurl: %s
-        ''' % (e['summary'].encode('utf-8'),
-                e['start']['dateTime'], e['description']))
-            u_id.append(e['id'])
+        for given_event in given_events:
+
+            if 'recurrence' in given_event.keys():
+                temp = given_event['description']
+                given_event['description'] = []
+                e = service.events().insert(calendarId=calendar_id,
+                                        sendNotifications=True, body=given_event).execute()
+                given_event['description'] = temp
+                print('''*** %r event added, Start: %s''' % (e['summary'], e['start']['dateTime'] ))
+                sub_event(service,calendar_id,given_event,e,'description')    
+            else:
+                e = service.events().insert(calendarId=calendar_id,
+                                        sendNotifications=True, body=given_event).execute()
+                print('''*** %r event added, Start: %s''' % (e['summary'], e['start']['dateTime'] ))
         return
     else:
         new_events=[]
         #u_id=[]
-        for given_event in EVENTs:
+        for given_event in given_events:
             page_token = None
             updated = False
             
@@ -91,7 +96,9 @@ def main(olduser,EVENTs, calendar_id):
                                        pageToken=page_token).execute()
             
                 for known_event in known_events['items']:            
-                    if 'recurrence' not in given_event.keys(): #Then it is homework
+                    if 'recurringEventId' in known_event.keys():
+                        continue
+                    elif 'recurrence' not in given_event.keys(): #Then it is homework
                         if given_event['summary'] == known_event['summary']:
                             for key in given_event.keys():
                                 
@@ -100,20 +107,10 @@ def main(olduser,EVENTs, calendar_id):
                                         try:
                                             given_event[key]['overrides'] = known_event[key]['overrides']
                                         except KeyError:
-                                            given_event[key]['overrides'] =[]
+                                            del given_event[key]['overrides']
 
 
-                                if given_event[key] == '' or given_event[key] == ' ':
-                                    if key not in known_event or known_event[key] == ' ':    #空對空  都是空
-                                        pass
-                                    else :                                                   #空對有  刪除
-                                        print('deleted attribute',key,':', known_event[key])
-                                elif key not in known_event:                                 #有對空  增加
-                                    print('new attribute',key, ':',given_event[key])
-                                elif given_event[key] != known_event[key] :                  #有對有，不一樣  更動
-                                    print(key, 'attribute of ', known_event['summary'],' at ',known_event['start']['dateTime'], ' is changed from ', known_event[key] ,'to',given_event[key])
-                                else:                                                        #有對有，一樣  不變
-                                    pass
+                                inform(given_event, known_event, key)
 
                             u = service.events().update(calendarId=calendar_id,
                                             eventId=known_event['id'],body=given_event).execute()
@@ -121,20 +118,17 @@ def main(olduser,EVENTs, calendar_id):
                             updated = True
                             break
                     else: #it is class
-                        if given_event['summary'] == known_event['summary'] and classtime(given_event) == classtime(known_event):
+                        if given_event['summary'] == known_event['summary'] and given_event['start']['dateTime'] == known_event['start']['dateTime']:
                             for key in given_event.keys():
-                                if given_event[key] == '' or given_event[key] == ' ':
-                                    if key not in known_event or known_event[key] == ' ':
-                                        pass
-                                    else:
-                                        print('deleted attribute',key,':', known_event[key])
-                                elif key not in known_event:
-                                    print('new attribute', key,':', given_event[key])
-                                elif given_event[key] != known_event[key] :
-                                    print(key, 'attribute of ', known_event['summary'],' at ',known_event['start']['dateTime'], ' is changed from ', known_event[key] ,'to',given_event[key])
-                                else:
-                                    pass
 
+                                if key == 'description':                                   
+                                    sub_event(service,calendar_id,given_event,known_event,key)
+                                    #print(known_event)                                       
+                                    continue
+                                else:
+                                    inform(given_event, known_event, key)
+
+                            del given_event['description']
                             u = service.events().update(calendarId=calendar_id,
                                             eventId=known_event['id'],body=given_event).execute()
                             u_id.append(u['id'])
@@ -148,13 +142,38 @@ def main(olduser,EVENTs, calendar_id):
                 if not page_token:
                     break
             if updated == False: #no correspoding events
-                print('new event')
+                #print('new event')
                 main(0, [given_event],calendar_id)
         
         return u_id
             
-            #print('j',EVENT)
-        
+def sub_event(service,calendar_id, given_event, main_event, key):
+    page_token = None
+    while True:
+        subevents = service.events().instances(calendarId=calendar_id,eventId=main_event['id'],pageToken=page_token).execute()
+        sorted_subevents = sorted(subevents['items'], key=lambda k: k['id'])
+        for x in range(18):
+            #print(sorted_subevents[x])
+            inform({key : given_event[key][x]},sorted_subevents[x] , key)                                            
+            sorted_subevents[x][key] = given_event[key][x]
+            u = service.events().update(calendarId=calendar_id, eventId=sorted_subevents[x]['id'], body=sorted_subevents[x]).execute()
+            u_id.append(u['id'])
+        page_token = subevents.get('nextPageToken')
+        if not page_token:
+            return
+
+def inform(given_event, known_event, key):
+    if given_event[key] == '' or given_event[key] == ' ':
+        if key not in known_event or known_event[key] == ' ':    #空對空  都是空
+            pass
+        else :                                                   #空對有  刪除
+            print('deleted attribute',key,':', known_event[key])
+    elif key not in known_event:                                 #有對空  增加
+        print('new attribute--',key, ':\n',given_event[key])
+    elif given_event[key] != known_event[key] :                  #有對有，不一樣  更動
+        print(key, 'attribute of ', known_event['summary'],' at ',known_event['start']['dateTime'], ' is changed from ', known_event[key] ,'to',given_event[key])
+    else:                                                        #有對有，一樣  不變
+        pass
 
 
 
@@ -201,12 +220,4 @@ def make_calender(user):
     else:
         print('使用者',user,'，您好')
         return [summary_list['NTUceiba'],1]
-
-def classtime(event):
-    year = int(event['start']['dateTime'][0:4])
-    month = int(event['start']['dateTime'][5:7])
-    day = int(event['start']['dateTime'][8:10])
-    time = event['start']['dateTime'][11:]
-    time_end = event['end']['dateTime'][11:]
-    return [datetime.date(year,month,day).weekday(), time, time_end]
 
