@@ -103,17 +103,22 @@ def main(olduser,given_events, calendar_id):
                             for key in given_event.keys():
                                 
                                 if key == 'reminders': 
-                                    if given_event[key]['overrides'] == [] and olduser == 2:
-                                        try:
-                                            given_event[key]['overrides'] = known_event[key]['overrides']
-                                        except KeyError:
+                                    if given_event[key]['overrides'] == [] :
+                                        if olduser == 2:
+                                            try:
+                                                given_event[key]['overrides'] = known_event[key]['overrides']
+                                            except KeyError:
+                                                del given_event[key]['overrides']
+                                        elif olduser == 1:
                                             del given_event[key]['overrides']
+
 
 
                                 inform(given_event, known_event, key)
 
                             u = service.events().update(calendarId=calendar_id,
                                             eventId=known_event['id'],body=given_event).execute()
+                            print(u['summary'], ' sucessfully updated')
                             u_id.append(u['id'])
                             updated = True
                             break
@@ -131,6 +136,7 @@ def main(olduser,given_events, calendar_id):
                             del given_event['description']
                             u = service.events().update(calendarId=calendar_id,
                                             eventId=known_event['id'],body=given_event).execute()
+                            print(u['summary'], ' sucessfully updated')
                             u_id.append(u['id'])
                             updated = True
                             break                    
@@ -220,4 +226,5 @@ def make_calender(user):
     else:
         print('使用者',user,'，您好')
         return [summary_list['NTUceiba'],1]
+
 
