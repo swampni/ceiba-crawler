@@ -35,7 +35,8 @@ class Crawler():
             _info.append(course_name)
             _info.append(course_time)
             _info.append(course_place)
-            _info.append({'homework': [], 'bulletin': [], 'syllabus':['','','','','','','','','','','','','','','','','','']})
+            _info.append({'homework': [], 'bulletin': [], 'syllabus': [
+                         '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']})
             self.courses.append(_info)
 
     def __len__(self):
@@ -62,7 +63,7 @@ class Crawler():
 
         try:
             self.user = self.browser.find_element_by_xpath(
-            '//*[@id="wel-msg"]/span').text
+                '//*[@id="wel-msg"]/span').text
         except:
             self.user = '???'
 
@@ -70,7 +71,6 @@ class Crawler():
         for course in courses[1:-2]:
             self.links.append(course.find_element_by_tag_name(
                 'a').get_attribute('href'))
-
 
     def get_homework(self, course):
         self.browser.get("https://ceiba.ntu.edu.tw/modules/index.php?csn=" +
@@ -101,31 +101,31 @@ class Crawler():
             print(course[1]+"'doesn't have a syllabus section")
         else:
             for i in range(1, entites):
-                
-                week =  int(self.browser.find_element_by_xpath(
-                '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td[1]').text[1:-1])
+
+                week = int(self.browser.find_element_by_xpath(
+                    '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td[1]').text[1:-1])
                 description = ''
-                description  +=  self.browser.find_element_by_xpath(
-                '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td[3]').text+'\n'
+                description += self.browser.find_element_by_xpath(
+                    '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td[3]').text+'\n'
                 if description == ' \n':
                     description = ''
-                
+
                 files = len(self.browser.find_elements_by_xpath(
-                '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td[4]/p'))
+                    '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td[4]/p'))
                 for j in range(0, files):
                     if j == 0:
                         description += '相關檔案網址:\n'
-                    description  += self.browser.find_element_by_xpath(
-                    '//*[@id="sect_cont"]/table/tbody/tr['+str(i+1)+']/td[4]/p['+str(j+1)+']/a').text+' : '
-                    description  +=  self.browser.find_element_by_xpath(
-                    '//*[@id="sect_cont"]/table/tbody/tr['+str(i+1)+']/td[4]/p['+str(j+1)+']/a').get_attribute('href')+'\n'
+                    description += self.browser.find_element_by_xpath(
+                        '//*[@id="sect_cont"]/table/tbody/tr['+str(i+1)+']/td[4]/p['+str(j+1)+']/a').text+' : '
+                    description += self.browser.find_element_by_xpath(
+                        '//*[@id="sect_cont"]/table/tbody/tr['+str(i+1)+']/td[4]/p['+str(j+1)+']/a').get_attribute('href')+'\n'
                 if week == 0:
-                    course[4]['syllabus'][0] += (description+'---以上為假期作業---\n') 
+                    course[4]['syllabus'][0] += (description+'---以上為假期作業---\n')
                 elif week > 19:
-                    course[4]['syllabus'][17] += ('---以下為假期作業---\n'+description) 
+                    course[4]['syllabus'][
+                        17] += ('---以下為假期作業---\n'+description)
                 else:
                     course[4]['syllabus'][week-1] += description
-
 
     def get_bulletin(self, course):
         self.browser.get("https://ceiba.ntu.edu.tw/modules/index.php?csn=" +
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     c.halt_browser()
 
 
-# 	print ss.decode('UTF-8')
-#	filename = u'webpage'+unicode(sources.index(i))+'.html'
-#	with open(filename, 'w') as f:
-#		f.write(ss.decode('UTF-8').encode('UTF-8'))
+#   print ss.decode('UTF-8')
+#   filename = u'webpage'+unicode(sources.index(i))+'.html'
+#   with open(filename, 'w') as f:
+#       f.write(ss.decode('UTF-8').encode('UTF-8'))
