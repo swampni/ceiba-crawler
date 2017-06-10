@@ -1,15 +1,15 @@
 from datetime import date
 from datetime import timedelta as delta
 # parsing the webpage
-week = {
-    '星期一': 1,
-    '星期二': 2,
-    '星期三': 3,
-    '星期四': 4,
-    '星期五': 5,
-    '星期六': 6,
-    '星期天': 7,
-    '星期日': 7
+startday = {
+    '星期一': '2017-02-20',
+    '星期二': '2017-02-21',
+    '星期三': '2017-02-22',
+    '星期四': '2017-02-23',
+    '星期五': '2017-02-24',
+    '星期六': '2017-02-25',
+    '星期天': '2017-02-26',
+    '星期日': '2017-02-26'
 }
 
 classTime = {
@@ -32,6 +32,10 @@ classTime = {
 
 def parse(soup, reminds, title):
 	name = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[0].td.string.lstrip().rstrip()
+	try:
+		info = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[1].td.text
+	except:
+		info = '無'
 	deadline = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[7].td.string.lstrip().rstrip()
 	link_tag = soup.body.div.div.find(id='section').div.table.tbody.find_all('tr')[2].td.a
 	if link_tag:
@@ -42,10 +46,45 @@ def parse(soup, reminds, title):
 		time = deadline[:-1].replace(' ', 'T')+"3:59:59+08:00"
 	else:
 		time = deadline.replace(' ', 'T')+":00:00+08:00"
-	description = '相關網址:'+'\n'+link
+	description = '作業說明:\n'+info+'\n'+'相關網址:'+'\n'+link
 
+
+	payload = { 
+			'summary':title+name,
+			'start':{'dateTime': time, 'timeZone':'Asia/Taipei'},
+			'end':{'dateTime':time, 'timeZone':'Asia/Taipei'},
+			'description': description,
+			'reminders':{
+    					'useDefault': False,
+    					'overrides':parse_remind(reminds)
+ 						 },
+			'colorId':'1'
+			}
+	return payload
+
+def parse_time(course_place, course_time, title, description):
+	split_course_time = course_time.split()
+	payloads = []
+	for i in range(0,len(split_course_time),2):		
+		start_day = startday[split_course_time[i]]
+		num = split_course_time[i+1].split(',')
+		start_time = start_day+'T'+classTime[num[0]][0]+':00+08:00'
+		end_time = start_day+'T'+classTime[num[-1]][1]+':00+08:00'	
+		payload = {
+				'summary':title,
+				'start': {'dateTime': start_time, 'timeZone':'Asia/Taipei'},
+				'end':{'dateTime':end_time, 'timeZone':'Asia/Taipei'},
+				'recurrence': ['RRULE:FREQ=WEEKLY;UNTIL=20170623T220000Z'],
+				'location': course_place,
+				'description': description,
+				'colorId':'2'
+				}
+		payloads.append(payload)
+	return payloads
+
+def parse_remind(reminds):
 	timecode = {'D': 1440, 'H': 60, 'M' : 1}
-	intremind = []
+	intreminds = []
 	for remind in reminds:
 	    word_count = -1
 	    word_start = 0
@@ -61,43 +100,5 @@ def parse(soup, reminds, title):
 	                word_start = word_count + 1
 	        
 	    if x != 0:
-	        intremind.append({'method': 'popup', 'minutes': x })
-
-
-
-	payload = { 
-			'summary':title+name,
-			'start':{'dateTime': time, 'timeZone':'Asia/Taipei'},
-			'end':{'dateTime':time, 'timeZone':'Asia/Taipei'},
-			'description': description,
-			'reminders':{
-    					'useDefault': False,
-    					'overrides':intremind
- 						 },
-			'colorId':'1'
-			}
-	return payload
-
-def parse_time(course_place, course_time, title):
-	split_course_time = course_time.split()
-	day = delta(days =1)
-	now = date.isoweekday(date.today())
-	cTime = []
-	payloads = []
-	for i in range(0,len(split_course_time),2):		
-		distance = (week[split_course_time[i]]-now+7)%7
-		start_day = date.today()+distance*day
-		num = split_course_time[i+1].split(',')
-		start_time = start_day.isoformat()+'T'+classTime[num[0]][0]+":00+08:00"
-		end_time = start_day.isoformat()+'T'+classTime[num[-1]][1]+":00+08:00"		
-		payload = {
-				'summary':title,
-				'start': {'dateTime': start_time, 'timeZone':'Asia/Taipei'},
-				'end':{'dateTime':end_time, 'timeZone':'Asia/Taipei'},
-				'recurrence': ['RRULE:FREQ=WEEKLY;UNTIL=20170623T220000Z'],
-				'location': course_place,
-				'description': ' ',
-				'colorId':'2'
-				}
-		payloads.append(payload)
-	return payloads
+	        intreminds.append({'method': 'popup', 'minutes': x })
+	return intreminds
