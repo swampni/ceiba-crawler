@@ -101,9 +101,11 @@ class Crawler():
             print(course[1]+"'doesn't have a syllabus section")
         else:
             for i in range(1, entites):
-
-                week = int(self.browser.find_element_by_xpath(
+                try:
+                    week =  int(self.browser.find_element_by_xpath(
                     '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td[1]').text[1:-1])
+                except:
+                    continue
                 description = ''
                 description += self.browser.find_element_by_xpath(
                     '//body/div/div/div/div/table/tbody/tr['+str(i+1)+']/td[3]').text+'\n'
