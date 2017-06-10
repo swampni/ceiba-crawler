@@ -7,10 +7,9 @@ import getpass
 import os
 from bs4 import BeautifulSoup as bs
 
-
-    #check for same event    
-    #upload new description
-    #upload new event
+# check for same event
+# upload new description
+# upload new event
 user_name = input('請輸入ceiba帳號')
 password = getpass.getpass('請輸入ceiba密碼')
 flag = True
@@ -38,8 +37,9 @@ else:
     yn = input('作業是否需要提醒?(Y/N)')
 remind = []
 if yn == 'Y' or yn == 'y':
-    while True :
-        remind.append(input('請輸入多久之前提醒(天 = D, 小時 = H, 分鐘 = M)(可設定多次提醒),完全輸入完畢請打end\n'))
+    while True:
+        remind.append(
+            input('請輸入多久之前提醒(天 = D, 小時 = H, 分鐘 = M)(可設定多次提醒),完全輸入完畢請打end\n'))
         if remind[-1] == 'end':
             del remind[-1]
             break
@@ -53,14 +53,14 @@ else:
 
 
 for course in c.courses:
-    calender.main(olduser,parsing.parse_time(course[3], course[2], course[1] , course[4]['syllabus']), cal_id)
-    confirmed =  calender.main(olduser, (parsing.parse(bs(page, 'html.parser'), remind,course[
-                  1]) for page in course[4]['homework'] ), cal_id)
+    calender.main(olduser, parsing.parse_time(course[3], course[
+                  2], course[1], course[4]['syllabus']), cal_id)
+    confirmed = calender.main(olduser, (parsing.parse(bs(page, 'html.parser'), remind, course[
+        1]) for page in course[4]['homework']), cal_id)
 if bool(olduser) == True:
-    calender.deleteMe(cal_id,confirmed) 
+    calender.deleteMe(cal_id, confirmed)
 
 
-    
 print('執行完畢')
 end = timer()
 print(end - start, one-start,  end-one)

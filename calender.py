@@ -57,8 +57,10 @@ def get_credentials():
         print('Storing credentials to ' + credential_path)
     return credentials
 
-u_id=[]
-def main(olduser,given_events, calendar_id):
+u_id = []
+
+
+def main(olduser, given_events, calendar_id):
     """Shows basic usage of the Google Calendar API.
 
     Creates a Google Calendar API service object and outputs a list of the next
@@ -74,72 +76,75 @@ def main(olduser,given_events, calendar_id):
                 temp = given_event['description']
                 given_event['description'] = []
                 e = service.events().insert(calendarId=calendar_id,
-                                        sendNotifications=True, body=given_event).execute()
+                                            sendNotifications=True, body=given_event).execute()
                 given_event['description'] = temp
-                print('''*** %r event added, Start: %s''' % (e['summary'], e['start']['dateTime'] ))
-                sub_event(service,calendar_id,given_event,e,'description')    
+                print('''*** %r event added, Start: %s''' %
+                      (e['summary'], e['start']['dateTime']))
+                sub_event(service, calendar_id, given_event, e, 'description')
             else:
                 e = service.events().insert(calendarId=calendar_id,
-                                        sendNotifications=True, body=given_event).execute()
-                print('''*** %r event added, Start: %s''' % (e['summary'], e['start']['dateTime'] ))
+                                            sendNotifications=True, body=given_event).execute()
+                print('''*** %r event added, Start: %s''' %
+                      (e['summary'], e['start']['dateTime']))
         return
     else:
-        new_events=[]
-        #u_id=[]
+        new_events = []
+        # u_id=[]
         for given_event in given_events:
             page_token = None
             updated = False
-            
-            #hw
+
+            # hw
             while True:
                 known_events = service.events().list(calendarId=calendar_id,
-                                       pageToken=page_token).execute()
-            
-                for known_event in known_events['items']:            
+                                                     pageToken=page_token).execute()
+
+                for known_event in known_events['items']:
                     if 'recurringEventId' in known_event.keys():
                         continue
-                    elif 'recurrence' not in given_event.keys(): #Then it is homework
+                    elif 'recurrence' not in given_event.keys():  # Then it is homework
                         if given_event['summary'] == known_event['summary']:
                             for key in given_event.keys():
-                                
-                                if key == 'reminders': 
-                                    if given_event[key]['overrides'] == [] :
+
+                                if key == 'reminders':
+                                    if given_event[key]['overrides'] == []:
                                         if olduser == 2:
                                             try:
-                                                given_event[key]['overrides'] = known_event[key]['overrides']
+                                                given_event[key]['overrides'] = known_event[
+                                                    key]['overrides']
                                             except KeyError:
-                                                del given_event[key]['overrides']
+                                                del given_event[
+                                                    key]['overrides']
                                         elif olduser == 1:
                                             del given_event[key]['overrides']
-
-
 
                                 inform(given_event, known_event, key)
 
                             u = service.events().update(calendarId=calendar_id,
-                                            eventId=known_event['id'],body=given_event).execute()
+                                                        eventId=known_event['id'], body=given_event).execute()
                             print(u['summary'], ' sucessfully updated')
                             u_id.append(u['id'])
                             updated = True
                             break
-                    else: #it is class
+                    else:  # it is class
                         if given_event['summary'] == known_event['summary'] and given_event['start']['dateTime'] == known_event['start']['dateTime']:
                             for key in given_event.keys():
 
-                                if key == 'description':                                   
-                                    sub_event(service,calendar_id,given_event,known_event,key)
-                                    #print(known_event)                                       
+                                if key == 'description':
+                                    sub_event(service, calendar_id,
+                                              given_event, known_event, key)
+                                    # print(known_event)
                                     continue
                                 else:
                                     inform(given_event, known_event, key)
 
                             del given_event['description']
                             u = service.events().update(calendarId=calendar_id,
-                                            eventId=known_event['id'],body=given_event).execute()
+                                                        eventId=known_event['id'], body=given_event).execute()
                             print(u['summary'], ' sucessfully updated')
                             u_id.append(u['id'])
                             updated = True
-                            break                    
+                            break
                     if updated == True:
                         break
                 if updated == True:
@@ -147,44 +152,47 @@ def main(olduser,given_events, calendar_id):
                 page_token = known_events.get('nextPageToken')
                 if not page_token:
                     break
-            if updated == False: #no correspoding events
+            if updated == False:  # no correspoding events
                 #print('new event')
-                main(0, [given_event],calendar_id)
-        
+                main(0, [given_event], calendar_id)
+
         return u_id
-            
-def sub_event(service,calendar_id, given_event, main_event, key):
+
+
+def sub_event(service, calendar_id, given_event, main_event, key):
     page_token = None
     while True:
-        subevents = service.events().instances(calendarId=calendar_id,eventId=main_event['id'],pageToken=page_token).execute()
+        subevents = service.events().instances(calendarId=calendar_id,
+                                               eventId=main_event['id'], pageToken=page_token).execute()
         sorted_subevents = sorted(subevents['items'], key=lambda k: k['id'])
         for x in range(18):
-            #print(sorted_subevents[x])
-            inform({key : given_event[key][x]},sorted_subevents[x] , key)                                            
+            # print(sorted_subevents[x])
+            inform({key: given_event[key][x]}, sorted_subevents[x], key)
             sorted_subevents[x][key] = given_event[key][x]
-            u = service.events().update(calendarId=calendar_id, eventId=sorted_subevents[x]['id'], body=sorted_subevents[x]).execute()
+            u = service.events().update(calendarId=calendar_id, eventId=sorted_subevents[
+                x]['id'], body=sorted_subevents[x]).execute()
             u_id.append(u['id'])
         page_token = subevents.get('nextPageToken')
         if not page_token:
             return
 
+
 def inform(given_event, known_event, key):
     if given_event[key] == '' or given_event[key] == ' ':
-        if key not in known_event or known_event[key] == ' ':    #空對空  都是空
+        if key not in known_event or known_event[key] == ' ':  # 空對空  都是空
             pass
-        else :                                                   #空對有  刪除
-            print('deleted attribute',key,':', known_event[key])
-    elif key not in known_event:                                 #有對空  增加
-        print('new attribute--',key, ':\n',given_event[key])
-    elif given_event[key] != known_event[key] :                  #有對有，不一樣  更動
-        print(key, 'attribute of ', known_event['summary'],' at ',known_event['start']['dateTime'], ' is changed from ', known_event[key] ,'to',given_event[key])
-    else:                                                        #有對有，一樣  不變
+        else:  # 空對有  刪除
+            print('deleted attribute', key, ':', known_event[key])
+    elif key not in known_event:  # 有對空  增加
+        print('new attribute--', key, ':\n', given_event[key])
+    elif given_event[key] != known_event[key]:  # 有對有，不一樣  更動
+        print(key, 'attribute of ', known_event['summary'], ' at ', known_event['start'][
+              'dateTime'], ' is changed from ', known_event[key], 'to', given_event[key])
+    else:  # 有對有，一樣  不變
         pass
 
 
-
-
-def deleteMe(calendar_id,confirmed):
+def deleteMe(calendar_id, confirmed):
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
@@ -194,12 +202,14 @@ def deleteMe(calendar_id,confirmed):
                                        pageToken=page_token).execute()
         for event in events['items']:
             if event['id'] not in confirmed:
-                print('deleted ', event['summary'],' at ', event['start']['dateTime'])
+                print('deleted ', event['summary'],
+                      ' at ', event['start']['dateTime'])
                 e = service.events().delete(calendarId=calendar_id,
                                             eventId=event['id']).execute()
         page_token = events.get('nextPageToken')
         if not page_token:
             break
+
 
 def make_calender(user):
     credentials = get_credentials()
@@ -216,15 +226,13 @@ def make_calender(user):
         if not page_token:
             break
     if 'NTUceiba' not in summary_list.keys():
-        print('新的使用者',user,'，您好')
+        print('新的使用者', user, '，您好')
         calendar = {
             'summary': 'NTUceiba',
             'timeZone': 'Asia/Taipei'
         }
         created_calendar = service.calendars().insert(body=calendar).execute()
-        return [created_calendar['id'],0]
+        return [created_calendar['id'], 0]
     else:
-        print('使用者',user,'，您好')
-        return [summary_list['NTUceiba'],1]
-
-
+        print('使用者', user, '，您好')
+        return [summary_list['NTUceiba'], 1]
