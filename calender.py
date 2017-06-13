@@ -79,13 +79,13 @@ def main(olduser, given_events, calendar_id):
                                             sendNotifications=True, body=given_event).execute()
                 given_event['description'] = temp
                 print('''*** %r event added, Start: %s''' %
-                      (e['summary'], e['start']['dateTime']))
+                      (cmd(e['summary']), e['start']['dateTime']))
                 sub_event(service, calendar_id, given_event, e, 'description')
             else:
                 e = service.events().insert(calendarId=calendar_id,
                                             sendNotifications=True, body=given_event).execute()
                 print('''*** %r event added, Start: %s''' %
-                      (e['summary'], e['start']['dateTime']))
+                      (cmd(e['summary']), e['start']['dateTime']))
         return
     else:
         new_events = []
@@ -122,7 +122,7 @@ def main(olduser, given_events, calendar_id):
 
                             u = service.events().update(calendarId=calendar_id,
                                                         eventId=known_event['id'], body=given_event).execute()
-                            print(u['summary'], ' sucessfully updated')
+                            print(cmd(u['summary']), ' sucessfully updated')
                             u_id.append(u['id'])
                             updated = True
                             break
@@ -141,7 +141,7 @@ def main(olduser, given_events, calendar_id):
                             del given_event['description']
                             u = service.events().update(calendarId=calendar_id,
                                                         eventId=known_event['id'], body=given_event).execute()
-                            print(u['summary'], ' sucessfully updated')
+                            print(cmd(u['summary']), ' sucessfully updated')
                             u_id.append(u['id'])
                             updated = True
                             break
@@ -182,12 +182,12 @@ def inform(given_event, known_event, key):
         if key not in known_event or known_event[key] == ' ':  # 空對空  都是空
             pass
         else:  # 空對有  刪除
-            print('deleted attribute', key, ':', known_event[key])
+            print('deleted attribute', key, ':', cmd(known_event[key]))
     elif key not in known_event:  # 有對空  增加
-        print('new attribute--', key, ':\n', given_event[key])
+        print('new attribute--', key, ':\n', cmd(given_event[key]))
     elif given_event[key] != known_event[key]:  # 有對有，不一樣  更動
-        print(key, 'attribute of ', known_event['summary'], ' at ', known_event['start'][
-              'dateTime'], ' is changed from ', known_event[key], 'to', given_event[key])
+        print(key, 'attribute of ', cmd(known_event['summary']), ' at ', known_event['start'][
+              'dateTime'], ' is changed from ', cmd(known_event[key]), 'to', cmd(given_event[key]))
     else:  # 有對有，一樣  不變
         pass
 
@@ -201,8 +201,10 @@ def deleteMe(calendar_id, confirmed):
         events = service.events().list(calendarId=calendar_id,
                                        pageToken=page_token).execute()
         for event in events['items']:
+            if 'recurringEventId' in event:
+                continue
             if event['id'] not in confirmed:
-                print('deleted ', event['summary'],
+                print('deleted ', cmd(event['summary']),
                       ' at ', event['start']['dateTime'])
                 e = service.events().delete(calendarId=calendar_id,
                                             eventId=event['id']).execute()
@@ -226,7 +228,7 @@ def make_calender(user):
         if not page_token:
             break
     if 'NTUceiba' not in summary_list.keys():
-        print('新的使用者', user, '，您好')
+        print('新的使用者', cmd(user), '，您好')
         calendar = {
             'summary': 'NTUceiba',
             'timeZone': 'Asia/Taipei'
@@ -234,5 +236,8 @@ def make_calender(user):
         created_calendar = service.calendars().insert(body=calendar).execute()
         return [created_calendar['id'], 0]
     else:
-        print('使用者', user, '，您好')
+        print('使用者', cmd(user), '，您好')
         return [summary_list['NTUceiba'], 1]
+
+def cmd(text):
+    return text.encode(sys.stdin.encoding, "replace").decode(sys.stdin.encoding)
