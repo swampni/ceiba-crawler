@@ -239,5 +239,6 @@ def make_calender(user):
         print('使用者', cmd(user), '，您好')
         return [summary_list['NTUceiba'], 1]
 
+
 def cmd(text):
     return text.encode(sys.stdin.encoding, "replace").decode(sys.stdin.encoding)
