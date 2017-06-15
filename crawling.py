@@ -123,7 +123,7 @@ class Crawler():
                         '//*[@id="sect_cont"]/table/tbody/tr['+str(i+1)+']/td[4]/p['+str(j+1)+']/a').get_attribute('href')+'\n'
                 if week == 0:
                     course[4]['syllabus'][0] += (description+'---以上為假期作業---\n')
-                elif week > 19:
+                elif week > 18:
                     course[4]['syllabus'][
                         17] += ('---以下為假期作業---\n'+description)
                 else:
