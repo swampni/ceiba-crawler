@@ -80,12 +80,14 @@ def main(olduser, given_events, calendar_id):
                 given_event['description'] = temp
                 print('''*** %r event added, Start: %s''' %
                       (cmd(e['summary']), e['start']['dateTime']))
+                u_id.append(e['id'])
                 sub_event(service, calendar_id, given_event, e, 'description')
             else:
                 e = service.events().insert(calendarId=calendar_id,
                                             sendNotifications=True, body=given_event).execute()
                 print('''*** %r event added, Start: %s''' %
                       (cmd(e['summary']), e['start']['dateTime']))
+                u_id.append(e['id'])
         return
     else:
         new_events = []
@@ -206,7 +208,7 @@ def deleteMe(calendar_id, confirmed):
             if event['id'] not in confirmed:
                 print('deleted ', cmd(event['summary']),
                       ' at ', event['start']['dateTime'])
-                e = service.events().delete(calendarId=calendar_id,
+                d = service.events().delete(calendarId=calendar_id,
                                             eventId=event['id']).execute()
         page_token = events.get('nextPageToken')
         if not page_token:
